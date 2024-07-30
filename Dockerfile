@@ -50,14 +50,23 @@ ARG MODEL_TYPE
 # Change working directory to ComfyUI
 WORKDIR /comfyui
 
+RUN mkdir -p models/checkpoints models/upscale_models
+
 # Download checkpoints/vae/LoRA to include in image based on model type
-RUN if [ "$MODEL_TYPE" = "sdxl" ]; then \
-      wget -O models/checkpoints/sd_xl_base_1.0.safetensors https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors && \
-      wget -O models/vae/sdxl_vae.safetensors https://huggingface.co/stabilityai/sdxl-vae/resolve/main/sdxl_vae.safetensors && \
-      wget -O models/vae/sdxl-vae-fp16-fix.safetensors https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/sdxl_vae.safetensors; \
-    elif [ "$MODEL_TYPE" = "sd3" ]; then \
-      wget --header="Authorization: Bearer ${HUGGINGFACE_ACCESS_TOKEN}" -O models/checkpoints/sd3_medium_incl_clips_t5xxlfp8.safetensors https://huggingface.co/stabilityai/stable-diffusion-3-medium/resolve/main/sd3_medium_incl_clips_t5xxlfp8.safetensors; \
-    fi
+RUN wget -O models/checkpoints/DreamShaperXL_Turbo_SFWdpmppSde_half_pruned.safetensors https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaperXL_Turbo_SFWdpmppSde_half_pruned.safetensors
+
+# Download Upscale model
+RUN wget -O models/upscale_models/4x-UltraSharp.pth https://huggingface.co/lokCX/4x-Ultrasharp/resolve/main/4x-UltraSharp.pth
+
+# Install custom nodes
+RUN git clone https://github.com/john-mnz/ComfyUI-Inspyrenet-Rembg.git /comfyui/custom_nodes/ComfyUI-Inspyrenet-Rembg
+WORKDIR /comfyui/custom_nodes/ComfyUI-Inspyrenet-Rembg
+RUN pip3 install -r requirements.txt
+
+# Install custom nodes
+RUN git clone https://github.com/ltdrdata/ComfyUI-Manager.git /comfyui/custom_nodes/ComfyUI-Manager
+WORKDIR /comfyui/custom_nodes/ComfyUI-Manager
+RUN pip3 install -r requirements.txt
 
 # Stage 3: Final image
 FROM base as final
